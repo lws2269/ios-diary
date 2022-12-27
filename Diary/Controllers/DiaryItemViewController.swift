@@ -11,20 +11,7 @@ class DiaryItemViewController: UIViewController {
     
     var diary: Diary?
     
-    enum Constant {
-        static let contentPlaceholder = "내용을 입력하세요."
-        static let titlePlaceholder = "제목"
-    }
-    
-    private let titleTextField: UITextField = {
-        let textField = UITextField()
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.placeholder = Constant.titlePlaceholder
-        textField.font = .preferredFont(forTextStyle: .body)
-        return textField
-    }()
-    
-    private let contentTextView: UITextView = {
+    private let textView: UITextView = {
         let textView = UITextView()
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.font = .preferredFont(forTextStyle: .body)
@@ -34,8 +21,8 @@ class DiaryItemViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
-        configureTextView()
         configureNotificationCenter()
+        textView.becomeFirstResponder()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -52,38 +39,20 @@ class DiaryItemViewController: UIViewController {
     
     private func configureUI() {
         self.view.backgroundColor = .white
-        
-        self.view.addSubview(titleTextField)
-        self.view.addSubview(contentTextView)
+    
+        self.view.addSubview(textView)
         
         NSLayoutConstraint.activate([
-            titleTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            titleTextField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor,
-                                                    constant: 10),
-            titleTextField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
-                                                     constant: -10),
-            
-            contentTextView.topAnchor.constraint(equalTo: titleTextField.bottomAnchor, constant: 15),
-            contentTextView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 5),
-            contentTextView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
+            textView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+            textView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 5),
+            textView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,
                                                       constant: -10),
-            contentTextView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            textView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
     
-    private func configureTextView() {
-        self.contentTextView.delegate = self
-        updateContentText(content: Constant.contentPlaceholder)
-        self.contentTextView.textColor = .lightGray
-    }
-    
-    func updateTitleText(title: String?) {
-        self.titleTextField.text = title
-    }
-    
     func updateContentText(content: String?) {
-        self.contentTextView.text = content
-        self.contentTextView.textColor = .black
+        self.textView.text = content
     }
 }
 
@@ -102,16 +71,16 @@ extension DiaryItemViewController {
         let keyboardViewEndFrame = view.convert(keyboardScreenEndFrame, from: view.window)
         
         if notification.name == UIResponder.keyboardWillHideNotification {
-            contentTextView.contentInset = .zero
+            textView.contentInset = .zero
             manageCoreData()
         } else {
-            contentTextView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: keyboardViewEndFrame.height - view.safeAreaInsets.bottom, right: 0)
+            textView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: keyboardViewEndFrame.height - view.safeAreaInsets.bottom, right: 0)
         }
         
-        contentTextView.verticalScrollIndicatorInsets = contentTextView.contentInset
+        textView.verticalScrollIndicatorInsets = textView.contentInset
 
-        let selectedRange = contentTextView.selectedRange
-        contentTextView.scrollRangeToVisible(selectedRange)
+        let selectedRange = textView.selectedRange
+        textView.scrollRangeToVisible(selectedRange)
     }
 }
 
@@ -119,20 +88,20 @@ extension DiaryItemViewController {
 extension DiaryItemViewController {
     
     @objc func manageCoreData() {
-        if titleTextField.text == "" { return }
-        
+        guard textView.text != "" else { return }
+
         if self.diary != nil {
             updateCoreData()
             return
         }
-        
+
         createCoreData()
     }
     
     func createCoreData() {
         do {
-            let title = titleTextField.text
-            let content = contentTextView.text
+            let (title, content) = sliceText()
+            
             self.diary = try CoreDataManager.shared.createDiary(title: title, content: content, createdAt: Date().timeIntervalSince1970)
         } catch {
             print(error)
@@ -141,8 +110,11 @@ extension DiaryItemViewController {
     
     func updateCoreData() {
         guard let diary else { return }
-        diary.title = titleTextField.text
-        diary.content = contentTextView.text
+        
+        let (title, content) = sliceText()
+        
+        diary.title = title
+        diary.content = content
         
         do {
             try CoreDataManager.shared.updateDiary(updatedDiary: diary)
@@ -150,21 +122,14 @@ extension DiaryItemViewController {
             print(error)
         }
     }
+    
+    func sliceText() -> (String?, String) {
+        var text = textView.text.components(separatedBy: "\n")
+        let title = text.first
+        text.removeFirst()
+        let content = text.joined(separator: "\n")
+        
+        return (title, content)
+    }
 }
 
-// MARK: - TextView Method
-extension DiaryItemViewController: UITextViewDelegate {
-    
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == Constant.contentPlaceholder {
-            updateContentText(content: nil)
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            updateContentText(content: Constant.contentPlaceholder)
-            textView.textColor = .lightGray
-        }
-    }
-}

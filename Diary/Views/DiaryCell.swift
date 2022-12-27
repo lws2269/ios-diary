@@ -66,11 +66,10 @@ final class DiaryCell: UITableViewCell {
     }
     
     func configureData(diary: Diary?) {
-        self.titleLabel.text = diary?.title
-        self.contentLabel.text = diary?.content
-        
         guard let diary else { return }
         
+        self.titleLabel.text = diary.title
+        self.contentLabel.text = diary.content?.components(separatedBy: "\n").filter { $0 != "" }.joined()
         let date = Date(timeIntervalSince1970: diary.createdAt)
         
         let localDate = DateFormatter.conversionLocalDate(date: date, locale: .current, dateStyle: .long)

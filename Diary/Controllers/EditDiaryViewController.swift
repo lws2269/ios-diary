@@ -25,8 +25,9 @@ final class EditDiaryViewController: DiaryItemViewController {
     }
     
     private func updateTexts() {
-        updateTitleText(title: diary?.title)
-        updateContentText(content: diary?.content)
+        guard let diary else { return }
+        
+        updateContentText(content: ((diary.title ?? "") + "\n" + (diary.content ?? "")))
     }
     
     private func configureNavigationItem() {
