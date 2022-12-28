@@ -11,16 +11,10 @@ class DiaryItemViewController: UIViewController {
     
     var diary: Diary?
     
-    enum Constant {
-        static let contentPlaceholder = "내용을 입력하세요."
-        static let titlePlaceholder = "제목"
-    }
-    
     private let titleTextField: UITextField = {
         let textField = UITextField()
         textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.placeholder = Constant.titlePlaceholder
-        textField.font = .preferredFont(forTextStyle: .body)
+        textField.font = .preferredFont(forTextStyle: .title3)
         return textField
     }()
     
@@ -36,11 +30,12 @@ class DiaryItemViewController: UIViewController {
         configureUI()
         configureTextView()
         configureNotificationCenter()
+        configureFirstResponderToTitle()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-
+        
         if self.isMovingFromParent {
             manageCoreData()
         }
@@ -72,9 +67,7 @@ class DiaryItemViewController: UIViewController {
     }
     
     private func configureTextView() {
-        self.contentTextView.delegate = self
-        updateContentText(content: Constant.contentPlaceholder)
-        self.contentTextView.textColor = .lightGray
+        self.titleTextField.delegate = self
     }
     
     func updateTitleText(title: String?) {
@@ -89,6 +82,10 @@ class DiaryItemViewController: UIViewController {
 
 // MARK: - Keyboard adjusting
 extension DiaryItemViewController {
+    
+    private func configureFirstResponderToTitle() {
+        self.titleTextField.becomeFirstResponder()
+    }
     
     private func configureNotificationCenter() {
         NotificationCenter.default.addObserver(self, selector: #selector(self.adjustForKeyboard), name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -152,19 +149,12 @@ extension DiaryItemViewController {
     }
 }
 
-// MARK: - TextView Method
-extension DiaryItemViewController: UITextViewDelegate {
-    
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.text == Constant.contentPlaceholder {
-            updateContentText(content: nil)
+// MARK: - UITextField Method
+extension DiaryItemViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField.hasText {
+            contentTextView.becomeFirstResponder()
         }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            updateContentText(content: Constant.contentPlaceholder)
-            textView.textColor = .lightGray
-        }
+        return false
     }
 }

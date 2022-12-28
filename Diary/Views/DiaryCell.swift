@@ -67,7 +67,7 @@ final class DiaryCell: UITableViewCell {
     
     func configureData(diary: Diary?) {
         self.titleLabel.text = diary?.title
-        self.contentLabel.text = diary?.content
+        self.contentLabel.text = diary?.content?.components(separatedBy: "\n").filter({ $0 != "" }).first
         
         guard let diary else { return }
         
