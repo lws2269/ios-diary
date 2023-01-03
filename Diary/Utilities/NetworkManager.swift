@@ -51,7 +51,8 @@ struct NetworkManager {
 
     }
     
-    func fetchIconData(iconCode: String, completion: @escaping (Data) -> Void) {
+    func fetchIconData(iconCode: String?, completion: @escaping (Data) -> Void) {
+        guard let iconCode else { return }
         let urlString = "https://openweathermap.org/img/wn/\(iconCode).png"
         
         guard let url: URL = URL(string: urlString) else { return }

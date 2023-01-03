@@ -35,6 +35,12 @@ final class DiaryCell: UITableViewCell {
         return label
     }()
     
+    let weatherIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
     private let contentLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.preferredFont(forTextStyle: .caption2)
@@ -52,6 +58,7 @@ final class DiaryCell: UITableViewCell {
         
         self.accessoryType = .disclosureIndicator
         self.stackView.addArrangedSubview(dateLabel)
+        self.stackView.addArrangedSubview(weatherIconImageView)
         self.stackView.addArrangedSubview(contentLabel)
         self.contentView.addSubview(titleLabel)
         self.contentView.addSubview(stackView)
@@ -84,7 +91,9 @@ final class DiaryCell: UITableViewCell {
             self.stackView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -Constant.spacing),
             
             self.dateLabel.leadingAnchor.constraint(equalTo: self.stackView.leadingAnchor),
-            self.contentLabel.trailingAnchor.constraint(equalTo: self.stackView.trailingAnchor)
+            self.contentLabel.trailingAnchor.constraint(equalTo: self.stackView.trailingAnchor),
+            self.weatherIconImageView.heightAnchor.constraint(equalToConstant: 18),
+            self.weatherIconImageView.widthAnchor.constraint(equalToConstant: 18)
         ])
     }
 }

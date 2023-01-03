@@ -90,6 +90,12 @@ extension DiaryListViewController: UITableViewDelegate, UITableViewDataSource {
         let (title, content) = sliceTitleAndContent(text: diary.text)
         let date = Date(timeIntervalSince1970: diary.createdAt)
         let dateString = DateFormatter.conversionLocalDate(date: date, locale: .current, dateStyle: .long)
+
+        NetworkManager.shared.fetchIconData(iconCode: diary.icon) { data in
+            DispatchQueue.main.async {
+                cell.weatherIconImageView.image = UIImage(data: data)
+            }
+        }
         
         cell.configureData(title: title, content: content, dateString: dateString)
         return cell
