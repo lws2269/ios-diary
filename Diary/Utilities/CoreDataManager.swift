@@ -28,7 +28,7 @@ class CoreDataManager {
         return container
     }()
     
-    func createDiary(text: String, createdAt: Double, completion: (Diary) -> Void) throws {
+    func createDiary(text: String, iconCode: String?, createdAt: Double, completion: (Diary) -> Void) throws {
             
         guard let entity = NSEntityDescription.entity(forEntityName: self.entityName, in: context) else {
             throw DataError.entityUndifined
@@ -40,6 +40,7 @@ class CoreDataManager {
         
         diaryData.id = UUID()
         diaryData.text = text
+        diaryData.icon = iconCode
         diaryData.createdAt = createdAt
         
         if context.hasChanges {

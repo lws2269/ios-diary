@@ -10,6 +10,7 @@ import UIKit
 class DiaryViewController: UIViewController {
     
     var diary: Diary?
+    var iconCode: String?
     
     private let contentTextView: UITextView = {
         let textView = UITextView()
@@ -28,6 +29,7 @@ class DiaryViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        
         updateDiary()
     }
     
@@ -37,7 +39,7 @@ class DiaryViewController: UIViewController {
         else { return }
         
         do {
-            try CoreDataManager.shared.createDiary(text: text,
+            try CoreDataManager.shared.createDiary(text: text, iconCode: iconCode,
                                                    createdAt: Date().timeIntervalSince1970) { diary in
                 self.diary = diary
             }

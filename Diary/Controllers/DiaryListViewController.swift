@@ -10,8 +10,7 @@ import CoreLocation
 final class DiaryListViewController: UIViewController {
  
     private var diaries: [Diary]?
-    private let locationManager = CLLocationManager()
-
+    
     private let tableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -24,7 +23,6 @@ final class DiaryListViewController: UIViewController {
         configureTableView()
         configureUI()
         configureNavigationItem()
-        fetchCurrentLocation()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -75,21 +73,6 @@ final class DiaryListViewController: UIViewController {
         let title = text.components(separatedBy: "\n").filter { $0 != ""}.first ?? ""
         let content = text.components(separatedBy: "\n").filter { $0 != ""}[safe: 1] ?? ""
         return (title, content)
-    }
-    
-    func fetchCurrentLocation() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestAlwaysAuthorization()
-        locationManager.startUpdatingLocation()
-    }
-}
-
-// MARK: - CLLocation
-extension DiaryListViewController: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
-        print("locations = \(locValue.latitude) \(locValue.longitude)")
     }
 }
 
