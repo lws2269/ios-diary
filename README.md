@@ -39,14 +39,15 @@
         │   └── Error/
         │       └── DataError.swift
         ├── Uitilities/
+        │   ├── NetworkManager.swift
         │   └── CoreDataManager.swift
         ├── Extension/
         │   ├── DateFormatter+extension.swift
         │   ├── Array+Extension.swift
-        │   └── String+Extension.Swift
         ├── Models/
         │   ├── Diary+CoreDataClass.swift
         │   ├── Diary+CoreDataProperties.swift
+        │   ├── Weather.swift
         │   └── Diary.swift
         ├── Views/
         │   └── DiaryCell.swift
@@ -76,12 +77,14 @@ func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options conn
 스토리 보드를 삭제하고, 코드를 통해 기본 `ViewContoller`를 `NavagitonViewController`로 선언하여 사용하기 위해 커스텀하였습니다.
 
 ## 2. Model
-### **DiaryData**
-- STEP1의 `sample`데이터를 parse하기 위한 `DTO`클래스입니다.
+~~### **DiaryData**~~
+~~- STEP1의 `sample`데이터를 parse하기 위한 `DTO`객체입니다.~~
 
 ### **Diary**
 - CoreData 사용을 위한 CoreDataClass 및 프로퍼티 입니다.
 
+### **Weather**
+- 날씨 API 통신시 Json 데이터 Parse를 위한 `DTO`객체입니다.
 ## 3. Utilites
 ### CoreDataManager
 - CoreData를 Manage 해주기 위한 Manager 역할을 합니다.
@@ -101,6 +104,12 @@ class CoreDataManager {
     ...
 }
 
+```
+### NetworkManager
+- 날씨 API를 사용하기 위한 네트워크 통신 객체입니다.
+- 위도 경도를 통해 해당위치의 날씨 데이터를 가져옵니다.
+```swift
+func fetchWeatherData(lat: String, lon: String, completion: @escaping (Weather?) -> Void) {}
 ```
 ## 4. Controller
 ### DiaryListViewController
@@ -290,6 +299,16 @@ extension String {
 </div>
 </details>
 
+<details>
+<summary>Step3 타임라인</summary>
+<div markdown="1">       
+    
+- **2023.01.03**
+    - NetWorkManager 구현, Weather타입 추가
+    - 코어데이터 마이그레이션
+    - 현재 위치의 위도 경도 값을 가져오는 CLLocationManager 구현
+</div>
+</details>
 
 ## ❓ 트러블 슈팅 & 어려웠던 점
 ### 일기 데이터에 대한 코어데이터 타입
@@ -335,6 +354,67 @@ extension Array {
 |:------------------------------------:|:------------------------------------:|
 |![](https://i.imgur.com/USP3O9C.gif)|![](https://i.imgur.com/gpPoIdy.gif)
 
+### 코어데이터 CRUD에 대한 기능 분리
+기존의 코드에서는 `DiaryViewController`의 기능을 확장하여 코어데이터에 관한 메서드를 정의하여 사용하였는데, `CoreDataManager`에서의 역할과 겹치는 부분이 있어 아래와 같이 클로져를 사용한 방식으로 리팩토링 하였다.
+
+```swift
+func createDiary(text: String, iconCode: String?, createdAt: Double, completion: (Diary) -> Void) throws {
+            
+        guard let entity = NSEntityDescription.entity(forEntityName: self.entityName, in: context) else {
+            throw DataError.entityUndifined
+        }
+        
+        guard let diaryData = NSManagedObject(entity: entity, insertInto: context) as? Diary else {
+            throw DataError.emptyData
+        }
+        
+        diaryData.id = UUID()
+        diaryData.text = text
+        diaryData.icon = iconCode
+        diaryData.createdAt = createdAt
+        
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                throw DataError.unChangedData
+            }
+        }
+        
+        completion(diaryData)
+    }
+```
+
+기존의 코드에서는 `ViewController`에서 아래와 같이 `CoreDataManager의` 메서드를 호출하고, 결과 값에 따라 `diary`를 변경하는 로직을 구현하였었다.
+```swift
+private func configureDiaryData() {
+    if self.diary == nil {
+        self.diary = createCoreData()
+    }
+}
+
+func createCoreData() -> Diary? {
+    do {
+        return try CoreDataManager.shared.createDiary(text: "", createdAt: Date().timeIntervalSince1970)
+    } catch {
+        print(error)
+    }
+    return nil
+}
+    
+```
+이후 리팩토링을 통해 위와같은 로직을 아래처럼 변경하였다.
+
+```swift
+do {
+    try CoreDataManager.shared.createDiary(text: text,
+                                           createdAt: Date().timeIntervalSince1970) { diary in
+        self.diary = diary
+    }
+} catch {
+    print(error)
+}
+```
 
 ---
 
